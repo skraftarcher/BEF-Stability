@@ -19,6 +19,7 @@
 /*.Rcheck/
 
 # RStudio files
+.Rproj
 .Rproj.user/
 
 # produced vignettes
@@ -47,3 +48,11 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# data files
+.csv
+.rds
+.xlsx
+.pdf
+.docx
+.txt
