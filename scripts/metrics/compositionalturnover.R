@@ -5,7 +5,7 @@ lp("vegan")
 
 # this function's input is two data sets the environment dataset and 
 # the community dataset
-# site.id os the column name of the unique site identifier
+# site.id is the column name of the unique site identifier
 
 # compositional turnover
 cturn.jadist<-function(ds.env,ds.com,site.id){

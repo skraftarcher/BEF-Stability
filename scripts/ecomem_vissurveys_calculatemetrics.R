@@ -3,71 +3,34 @@
 
 # load packages and download up to date data
 source("scripts/install_packages_function.R")
-# source("scripts/download_all_experiment_data-EX.R")
-# 2
 source("scripts/metrics/cv.R")
 source("scripts/metrics/compositionalturnover.R")
 lp("readxl")
 lp("codyn")
 
 # bring in data----
-samplings<-read_xlsx(paste0("odata/downloaded_2025-07-17_EXPERIMENT - Sampling Dates.xlsx"),sheet=1)
-
-vis<-read_xlsx(paste0("odata/downloaded_2025-07-17_EXPERIMENT - Visual Survey Data.xlsx"),sheet=2)%>%
-  filter(!is.na(plotID))
-
-# size<-read_xlsx(paste0("odata/downloaded_2025-07-17_EXPERIMENT - Visual Survey Data.xlsx"),sheet=3)
-
-tax<-read_xlsx(paste0("odata/downloaded_2025-07-17_EXPERIMENT - LAB - Dipnet.xlsx"),sheet=4)
-
-# organize data----
-viswide<-vis[-grep("egg",vis$taxa),]%>%
-  select(-scientific.name,-QAQC,-common.name,-Notes)%>%
-  filter(taxa!="animal-0")%>%
-  rename(taxaID=taxa)%>%
-  left_join(tax)%>%
-  group_by(date,blockID,plotID,UpdateTaxaID,Surveyor)%>%
-  summarize(abund=sum(total.n))%>%
-  mutate(sampling=case_when(
-    date >= samplings$Start.date[1] & date <=samplings$End.date[1]~samplings$sampling[1],
-    date >= samplings$Start.date[2] & date <=samplings$End.date[2]~samplings$sampling[2],
-    date >= samplings$Start.date[3] & date <=samplings$End.date[3]~samplings$sampling[3],
-    date >= samplings$Start.date[4] & date <=samplings$End.date[4]~samplings$sampling[4],
-    date >= samplings$Start.date[5] & date <=samplings$End.date[5]~samplings$sampling[5]),
-    time.var=case_when(
-      sampling=="s1"~1,
-      sampling=="s2"~2,
-      sampling=="s3"~3,
-      sampling=="s4"~4,
-      sampling=="s5"~5,
-    ))%>%
-  pivot_wider(names_from = UpdateTaxaID,values_from = abund,values_fill = 0)
-
-plot.info<-viswide%>%
-  select(blockID,plotID,date)%>%
-  distinct()
-plot.info$Bay<-"SA"
-plot.info$Bay[grep("SJ",plot.info$plotID)]<-"SJ"
-plot.info$Scar<-"Scar"
-plot.info$Scar[grep("UU",plot.info$plotID)]<-"No.scar"
-plot.info$Scar[grep("UG",plot.info$plotID)]<-"No.scar"
-plot.info$Graze<-"Graze"
-plot.info$Graze[grep("SU",plot.info$plotID)]<-"No.graze"
-plot.info$Graze[grep("UU",plot.info$plotID)]<-"No.graze"
-
-viswide<-left_join(plot.info,viswide)
+viswide<-read.csv("odata/EcoMEM_wide_vissurvey_datawithdummy.csv")%>%
+  mutate(Scar=ifelse(treat %in% c("SU","SG"),"scar","no.scar"),
+         Graze=ifelse(treat %in% c("SG","UG"),"graze","no.graze"),
+         Bay=ifelse(blockID %in% c("SA1","SA2","SA3","SA4","SA5","SA6"),"StAndrew","StJoe"))
+viswide<-viswide[,c(1:4,72:74,5:71)]
 
 vislong<-viswide%>%
-  pivot_longer(-1:-9,names_to="taxa",values_to="abund")
+  pivot_longer(-1:-7,names_to="taxa",values_to="abund")%>%
+  separate(sampling,into=c("s","time.var"),sep=-1,remove=FALSE,convert = T)%>%
+  select(-s)%>%
+  filter(taxa!="dummy")
 
 # time covariance----
 tvar<-cvhome(ds=viswide,
-         nc=9)
+         nc=7)
 # space covariance----
 svar<-cvhome(ds=viswide,
+             nc=7,
              tors="spatial")
+
 # compositional turnover----
-cturn<-cturn.jadist(ds.env=viswide[,1:9],ds.com=viswide[,-1:-9],site.id="plotID")
+cturn<-cturn.jadist(ds.env=viswide[,1:7],ds.com=viswide[,-1:-7],site.id="plotID")
 
 # extinctions----
 
@@ -91,10 +54,9 @@ app<-turnover(
 # calculate resistance----
 # think through this one more
 viswide2<-viswide%>%
-  mutate(dummy=1)%>%
   filter(sampling=="s5")
 
-vis.hel<-decostand(viswide2[,-1:-9],method="hellinger")
+vis.hel<-decostand(viswide2[,-1:-7],method="hellinger")
 vis.rda<-rda(vis.hel)
 plot(vis.rda)
 vis.ris<-data.frame(viswide2[,1:9],
