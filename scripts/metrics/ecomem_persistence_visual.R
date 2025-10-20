@@ -30,7 +30,7 @@ empers.heat<-function(vis){
   #save the plot
   ggsave("ecomem_species_persistence_heatmap.png",
          plot = persistence_plot,
-         width - 12,
+         width = 12,
          height = 8,
          dpi = 300)
 }
