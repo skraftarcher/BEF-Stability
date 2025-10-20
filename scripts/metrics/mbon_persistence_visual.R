@@ -4,7 +4,7 @@ lp("tidyverse")
 
 #this function's input is two data sets; the environment dataset and
 #the abundance dataset
-empers.heat<-function(ds.env,ds.abund){
+mbonpers.heat<-function(ds.env,ds.abund){
   #add row numbers so we can join them
   ds.env <- ds.env %>%
     mutate(row_id = row_number())
@@ -43,7 +43,7 @@ empers.heat<-function(ds.env,ds.abund){
     print(paste("Generating heatmap for site:", site_name))
     
     #basic heatmap
-    mbon_plot <- ggplot(mbon_site, aes(x = sampling, y = taxa,
+    mbon_plot <- ggplot(mbon_site, aes(x = date.retrieved, y = taxa,
                                        fill = factor(pa))) +
       geom_tile(color = "white", linewidth = 0.5) +
       facet_wrap(~tray, ncol = 3) +
@@ -53,15 +53,15 @@ empers.heat<-function(ds.env,ds.abund){
       theme_minimal() +
       theme(axis.text.x = element_text(angle = 45, hjust = 1),
             axis.text.y = element_text(size = 2.5)) +
-      labs(x = "Sampling Period", 
-           y = "Species", 
-           title = "Taxa at", site_name)
+      labs(x = "Date Retrieved", 
+           y = "Taxa", 
+           title = paste("Taxa at", site_name))
     print(mbon_plot)
     
     #save the plot
-    ggsave("mbon_species_persistence_heatmap_", site_name, ".png",
+    ggsave(paste("mbon_species_persistence_heatmap_", site_name, ".png"),
            plot = mbon_plot,
-           width - 12,
+           width = 12,
            height = 8,
            dpi = 300)
   }
