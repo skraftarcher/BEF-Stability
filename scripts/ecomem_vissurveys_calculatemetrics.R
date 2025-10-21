@@ -67,7 +67,9 @@ svar<-cvhome(ds=viswide,
 cturn<-cturn.jadist(ds.env=viswide[,1:7],ds.com=viswide[,-1:-7],site.id="plotID")
 
 # extinctions----
-
+#################################################
+## from codyn package, pretty straight forward ##
+#################################################
 dis<-turnover(
   df=vislong,
   time.var="time.var",
@@ -77,6 +79,9 @@ dis<-turnover(
   metric="disappearance")
 
 #invasions----
+#################################################
+## from codyn package, pretty straight forward ##
+#################################################
 app<-turnover(
   df=vislong,
   time.var="time.var",
@@ -87,6 +92,16 @@ app<-turnover(
 
 # calculate resistance----
 # think through this one more
+
+## From Donohue et al. 2013 
+## Measured as the inverse of the Euclidian distance from each experimental plot to the 
+## centroid of the unmanipulated uncaged treatment at the end of the experiment 
+## [based  on Bray-Curtis similarity matrices calculated from log (x + 1)-transformed algal cover  data]. 
+## This provides a holistic measure of the extent of change in algal community  structure over the duration 
+## of the experiment, over and above natural background  dynamics. The resistance of the caged plots with no 
+## experimental consumer  removals did not differ statistically from the inverse of the distance of the uncaged 
+## plots to their treatment centroid (t3 = 0.24, P = 0.82).
+
 viswide2<-viswide%>%
   filter(sampling=="s5")
 
