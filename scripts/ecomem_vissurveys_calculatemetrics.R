@@ -21,15 +21,49 @@ vislong<-viswide%>%
   select(-s)%>%
   filter(taxa!="dummy")
 
+#######################
+## OVERALL QUESTION ##
+######################
+
+## What do we want to use as response variables?
+# Possibilities to examine -
+# MBON 
+#   Oyster volume
+#   Species richness
+#   Total Abundance/density
+#   Total biomass/biomass/m3
+#   Group-specific responses e.g., fish, amphipod/isopods (only confident in abundance/biomass data), crabs, shrimps
+#   Others?
+# ECOMEM
+#   seagrass % cover
+#   seagrass shoot density
+#   macroalgal % cover
+#   macrophyte species richness
+#   animal species richness
+#   animal total abundance
+#   others?
+
+
 # time covariance----
+############################################
+## QUESTION - should we detrend the data? ##
+############################################
 tvar<-cvhome(ds=viswide,
          nc=7)
 # space covariance----
+############################################
+## QUESTION - should we detrend the data? ##
+############################################
 svar<-cvhome(ds=viswide,
              nc=7,
              tors="spatial")
 
 # compositional turnover----
+####################################################
+## QUESTION - should this be 1 number at the end? ##
+##    mean? median? sd?                           ##
+####################################################
+
 cturn<-cturn.jadist(ds.env=viswide[,1:7],ds.com=viswide[,-1:-7],site.id="plotID")
 
 # extinctions----
