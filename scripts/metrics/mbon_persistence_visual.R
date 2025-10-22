@@ -46,7 +46,6 @@ mbonpers.heat<-function(ds.env,ds.abund){
     mbon_plot <- ggplot(mbon_site, aes(x = date.retrieved, y = taxa,
                                        fill = factor(pa))) +
       geom_tile(color = "white", linewidth = 0.5) +
-      facet_wrap(~tray, ncol = 3) +
       scale_fill_manual(values = c("0" = "gray90", "1" = "#2c7bb6"),
                         labels = c("Absent", "Present"),
                         name = "Status") +
