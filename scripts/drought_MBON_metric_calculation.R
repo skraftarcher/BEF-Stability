@@ -63,7 +63,7 @@ d6<-d6[,c(1:34,155:157,35:154)]
 nd6<-nd6[,c(1:34,155:157,35:154)]
 
 
-# temporal variability
+# temporal variability----
 source("scripts/metrics/cv.R")
 source("scripts/metrics/compositionalturnover.R")
 
@@ -110,7 +110,7 @@ nodrought.space.between.cv<-cvhome(ds=nd6,
                                   s.vars = c("basin","sampling"),
                                   dset="m")
 
-# compositional turnover
+# compositional turnover ----
 d6.site<-d6%>%
   group_by(site,sampling)%>%
   mutate(nt=n())%>%
@@ -205,3 +205,41 @@ nd6inv<-turnover(
   abundance.var="abund",
   replicate.var="site",
   metric="appearance")
+
+# resistance----
+
+d6.env<-d6[,1:37]
+d6.com<-d6[,-1:-37]
+
+lp("vegan")
+
+d6.com.hel<-decostand(d6.com,"hellinger")
+
+d6.rda<-rda(d6.com.hel)
+
+d6.scores<-data.frame(scores(d6.rda,choices=c(1,2),display="sites"))
+
+d6.env<-bind_cols(d6.env,d6.scores)
+
+
+nd6.env<-nd6[,1:37]
+nd6.com<-nd6[,-1:-37]
+
+nd6.com.hel<-decostand(nd6.com,"hellinger")
+
+nd6.rda<-rda(nd6.com.hel)
+
+nd6.scores<-data.frame(scores(nd6.rda,choices=c(1,2),display="sites"))
+
+nd6.env<-bind_cols(nd6.env,nd6.scores)%>%
+  group_by(site)%>%
+  mutate(cent.x=mean(PC1),
+         cent.y=mean(PC2),
+         dists=1/sqrt((PC1-cent.x)^2+(PC2-cent.y)^2))
+
+centroids<-nd6.env%>%
+  select(site,cent.x,cent.y)%>%
+  distinct()
+
+d6.env<-left_join(d6.env,centroids)%>%
+  mutate(dists=1/sqrt((PC1-cent.x)^2+(PC2-cent.y)^2))
