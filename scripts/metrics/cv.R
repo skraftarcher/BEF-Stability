@@ -3,6 +3,7 @@ source("scripts/install_packages_function.R")
 lp("tidyverse")
 lp("vegan")
 lp("EnvStats")
+lp("pracma")
 # need a dataset that is wide (species as columns) and 
 # has environmental variables as the first few columns (default is 9)
 # g.vars is the first grouping, default is t.vars=c("blockID","plotID","Scar","Graze","sampling")
@@ -13,7 +14,7 @@ lp("EnvStats")
 
 cvhome<-function(ds,
              nc=9,
-             tors="temporal",
+             tors="temporal",# other option is "spatial"
              g.vars=c("blockID","plotID","sampling","Scar","Graze"),
              t.vars=c("blockID","plotID","Scar","Graze"),
              s.vars=c("Scar","Graze","Bay","sampling"),
@@ -25,18 +26,24 @@ cvhome<-function(ds,
     summarize(abund=sum(abund))%>%
     ungroup()%>%
     left_join(t1)
+  t2$dt.spr<-as.vector(detrend(t2$spr))
+  t2$dt.abund<-as.vector(detrend(t2$abund))
   if(tors=="temporal"){
     return(t2%>%
              ungroup()%>%
              group_by(across(all_of(t.vars)))%>%
              summarize(temp.cva=cv(abund),
-                temp.cvs=cv(spr)))
+                temp.cvs=cv(spr),
+                temp.dt.cva=cv(dt.abund),
+                temp.dt.cvs=cv(dt.spr)))
   }
   if(tors=="spatial"){
     return(t2%>%
              ungroup()%>%
              group_by(across(all_of(s.vars)))%>%
              summarize(space.cva=cv(abund),
-                       space.cvs=cv(spr)))
+                       space.cvs=cv(spr),
+                       temp.dt.cva=cv(dt.abund),
+                       temp.dt.cvs=cv(dt.spr)))
   }
 }

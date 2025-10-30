@@ -21,36 +21,52 @@ vislong<-viswide%>%
   select(-s)%>%
   filter(taxa!="dummy")
 
+vis2<-data.frame(viswide[,1:7],spr=specnumber(viswide[,c(-1:-7)]))
+vis3<-vislong%>%
+  group_by(blockID,plotID,sampling,Scar,Graze)%>%
+  summarize(abund=sum(abund))%>%
+  ungroup()%>%
+  left_join(vis2)
+
+eco.sg<-read.csv("odata/EcoMEM_thalassia p cover shoot density and canopy by quadrat long.csv")
+
+
 #######################
 ## OVERALL QUESTION ##
 ######################
 
-## What do we want to use as response variables?
-# Possibilities to examine -
+## Response variables we will use
 # MBON 
 #   Oyster volume
-#   Species richness
 #   Total Abundance/density
-#   Total biomass/biomass/m3
-#   Group-specific responses e.g., fish, amphipod/isopods (only confident in abundance/biomass data), crabs, shrimps
-#   Others?
-# ECOMEM
-#   seagrass % cover
-#   seagrass shoot density
-#   macroalgal % cover
-#   macrophyte species richness
 #   animal species richness
-#   animal total abundance
-#   others?
+# ECOMEM
+#   seagrass shoot density
+#   visual survey species richness
+#   visual survey total abundance
 
 
 # time covariance----
 ############################################
 ## QUESTION - should we detrend the data? ##
 ############################################
-tvar<-cvhome(ds=viswide,
+# look at temporal variation in species richness and species abundance over time
+ggplot(data=vis3%>%filter(sampling!="s1"),aes(x=sampling,y=spr,group=plotID,color=Bay))+geom_line()+facet_grid(Scar~Graze)
+ggplot(data=vis3,aes(x=sampling,y=abund,group=plotID,color=Bay))+geom_line()+facet_grid(Scar~Graze)
+# looks like there might be a trend in species richness across treatments
+
+tvar.ecomem<-cvhome(ds=viswide,
          nc=7)
-# space covariance----
+tvar.sg<-cvhome(ds=eco.sg[,c(-8,-10,-12)],
+                nc=8,
+                tors = "temporal",
+                g.vars=c("blockID","plotID","sampling","mnths","bay","scar","graze"),
+                t.vars=c("blockID","plotID","scar","graze"))%>%
+  select(-temp.cvs,-temp.dt.cvs)%>%
+  rename(temp.cvsg=temp.cva,
+         temp.dt.cvsg=temp.dt.cva)
+
+# spatial covariance----
 ############################################
 ## QUESTION - should we detrend the data? ##
 ############################################
@@ -59,10 +75,6 @@ svar<-cvhome(ds=viswide,
              tors="spatial")
 
 # compositional turnover----
-####################################################
-## QUESTION - should this be 1 number at the end? ##
-##    mean? median? sd?                           ##
-####################################################
 
 cturn<-cturn.jadist(ds.env=viswide[,1:7],ds.com=viswide[,-1:-7],site.id="plotID")
 
