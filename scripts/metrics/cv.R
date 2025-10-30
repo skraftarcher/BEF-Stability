@@ -18,14 +18,31 @@ cvhome<-function(ds,
              g.vars=c("blockID","plotID","sampling","Scar","Graze"),
              t.vars=c("blockID","plotID","Scar","Graze"),
              s.vars=c("Scar","Graze","Bay","sampling"),
-             baseval="abund"){
-  t1<-data.frame(ds[,1:nc],spr=specnumber(ds[,c(-1:-nc)]))
-  t2<-ds%>%
-    pivot_longer(-1:-all_of(nc),names_to = "taxa",values_to="abund")%>%
-    group_by(across(all_of(g.vars)))%>%
-    summarize(abund=sum(abund))%>%
-    ungroup()%>%
-    left_join(t1)
+             baseval="abund",
+             dset="e"){
+  if(dset=="e"){
+    t1<-data.frame(ds[,1:nc],spr=specnumber(ds[,c(-1:-nc)]))
+    t2<-ds%>%
+      pivot_longer(-1:-all_of(nc),names_to = "taxa",values_to="abund")%>%
+      group_by(across(all_of(g.vars)))%>%
+      summarize(abund=sum(abund))%>%
+      ungroup()%>%
+      left_join(t1)
+  }
+  if(dset=="m"){
+    t1<-data.frame(ds[,1:nc],spr=specnumber(ds[,c(-1:-nc)]))%>%
+      group_by(across(all_of(g.vars)))%>%
+      summarize(spr=mean(spr))
+    t2<-ds%>%
+      pivot_longer(-1:-all_of(nc),names_to = "taxa",values_to="abund")%>%
+      group_by(across(all_of(g.vars)))%>%
+      summarize(nt=length(unique(tray)),
+                abund=sum(abund)/(nt*0.220806))%>%
+      ungroup()%>%
+      left_join(t1)
+      
+  }
+  
   t2$dt.spr<-as.vector(detrend(t2$spr))
   t2$dt.abund<-as.vector(detrend(t2$abund))
   if(tors=="temporal"){
@@ -43,7 +60,7 @@ cvhome<-function(ds,
              group_by(across(all_of(s.vars)))%>%
              summarize(space.cva=cv(abund),
                        space.cvs=cv(spr),
-                       temp.dt.cva=cv(dt.abund),
-                       temp.dt.cvs=cv(dt.spr)))
+                       space.dt.cva=cv(dt.abund),
+                       space.dt.cvs=cv(dt.spr)))
   }
 }
