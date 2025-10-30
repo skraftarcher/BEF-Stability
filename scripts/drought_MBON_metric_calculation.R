@@ -43,7 +43,6 @@ d6<-d6%>%
 unique(d6$sampling)
 
 d6$sampling<-factor(d6$sampling,levels=c("Spring 2022",
-                                         "Summer 2022",
                                          "Summer 2023",
                                          "Fall 2023",
                                          "Winter 2024"))
@@ -243,3 +242,119 @@ centroids<-nd6.env%>%
 
 d6.env<-left_join(d6.env,centroids)%>%
   mutate(dists=1/sqrt((PC1-cent.x)^2+(PC2-cent.y)^2))
+
+
+# organize, visualize, and analyze data ----
+theme_set(theme_bw()+theme(panel.grid = element_blank()))
+
+# look at temporal variability
+temp.cv<-bind_rows(bind_cols(drought.tempcv,data.frame(dgroup="drought")),
+                   bind_cols(nodrought.tempcv,data.frame(dgroup="nodrought")))
+
+(temp.cva.t<-t.test(temp.cv$temp.cva~temp.cv$dgroup))
+(temp.cvspr.t<-t.test(temp.cv$temp.cvs~temp.cv$dgroup))
+
+(temp.cva.kw<-kruskal.test(temp.cv$temp.cva~temp.cv$dgroup))
+(temp.cvspr.kw<-kruskal.test(temp.cv$temp.cvs~temp.cv$dgroup))
+
+ggplot(data=temp.cv)+
+  geom_boxplot(aes(x=dgroup,y=temp.cva))
+
+ggplot(data=temp.cv)+
+  geom_boxplot(aes(x=dgroup,y=temp.cvs))
+
+# look at within site spatial variability
+site.cv<-temp.cv<-bind_rows(bind_cols(drought.space.within.cv,data.frame(dgroup="drought")),
+                            bind_cols(nodrought.space.within.cv,data.frame(dgroup="nodrought")))
+
+(site.cva.t<-t.test(site.cv$space.cva~site.cv$dgroup))
+(site.cvspr.t<-t.test(site.cv$space.cvs~site.cv$dgroup))
+
+(site.cva.kw<-kruskal.test(site.cv$space.cva~site.cv$dgroup))
+(site.cvspr.kw<-kruskal.test(site.cv$space.cvs~site.cv$dgroup))
+
+ggplot(data=site.cv)+
+  geom_boxplot(aes(x=dgroup,y=space.cva))
+
+ggplot(data=site.cv)+
+  geom_boxplot(aes(x=dgroup,y=space.cvs))
+
+# look at between site spatial variability
+site2.cv<-bind_rows(bind_cols(drought.space.between.cv,data.frame(dgroup="drought")),
+                            bind_cols(nodrought.space.between.cv,data.frame(dgroup="nodrought")))
+
+(site2.cva.t<-t.test(site2.cv$space.cva~site2.cv$dgroup))
+(site2.cvspr.t<-t.test(site2.cv$space.cvs~site2.cv$dgroup))
+
+(site2.cva.kw<-kruskal.test(site2.cv$space.cva~site2.cv$dgroup))
+(site2.cvspr.kw<-kruskal.test(site2.cv$space.cvs~site2.cv$dgroup))
+
+ggplot(data=site2.cv)+
+  geom_boxplot(aes(x=dgroup,y=space.cva))
+
+ggplot(data=site2.cv)+
+  geom_boxplot(aes(x=dgroup,y=space.cvs))
+
+# comp.turnover----
+turnover<-bind_rows(bind_cols(drought.compt,data.frame(dgroup="drought")),
+                    bind_cols(nodrought.compt,data.frame(dgroup="nodrought")))
+
+(turn.t<-t.test(turnover$dsts~turnover$dgroup))
+
+ggplot(data=turnover)+
+  geom_boxplot(aes(x=dgroup,y=dsts))
+# no difference
+
+# extinctions----
+ext<-bind_rows(bind_cols(d6dis,data.frame(dgroup="drought")),
+                 bind_cols(nd6dis,data.frame(dgroup="nodrought")))
+
+(ext.t<-t.test(ext$disappearance~ext$dgroup))
+
+
+ggplot(data=ext)+
+  geom_boxplot(aes(x=dgroup,y=disappearance))
+
+# invasions----
+inv<-bind_rows(bind_cols(d6inv,data.frame(dgroup="drought")),
+               bind_cols(nd6inv,data.frame(dgroup="nodrought")))
+
+(inv.t<-t.test(inv$appearance~inv$dgroup))
+
+ggplot(data=inv)+
+  geom_boxplot(aes(x=dgroup,y=appearance))
+
+# resistance
+d6.res<-d6.env%>%
+  select(site,sampling,basin,dists,PC1,PC2)%>%
+  mutate(dgroup="drought")
+
+
+nd6.res<-nd6.env%>%
+  select(site,sampling,basin,dists,PC1,PC2)%>%
+  mutate(dgroup="nodrought")
+
+res<-bind_rows(d6.res,nd6.res)
+
+(res.t<-t.test(res$dists~res$dgroup))
+(res.kw<-kruskal.test(res$dists~res$dgroup))
+
+ggplot(data=res)+
+  geom_boxplot(aes(x=dgroup,y=dists))
+
+# make plot of resistance
+ggplot()+
+  stat_ellipse(aes(x=PC1,y=PC2,color=site),data=res%>%filter(dgroup=="nodrought"))+
+  # geom_point(data=centroids,aes(x=cent.x,y=cent.y,color=site),shape=15,size=6)+
+  # geom_point(aes(x=PC1,y=PC2,color=site),size=4,alpha=.5,data=res%>%filter(dgroup=="drought"))+
+  stat_ellipse(aes(x=PC1,y=PC2,color=site,fill=site),alpha=.5,geom="polygon",data=res%>%filter(dgroup=="drought"))+
+  facet_wrap(~site)
+  
+
+ggplot()+
+  stat_ellipse(aes(x=PC1,y=PC2,color=site,fill=site),geom="polygon",alpha=.5,data=res%>%filter(dgroup=="nodrought"))+
+  # geom_point(data=centroids,aes(x=cent.x,y=cent.y,color=site),shape=15,size=6)+
+  # geom_point(aes(x=PC1,y=PC2,color=site),size=4,alpha=.5,data=res%>%filter(dgroup=="drought"))+
+  stat_ellipse(aes(x=PC1,y=PC2,color=site,fill=site),alpha=.5,geom="polygon",data=res%>%filter(dgroup=="drought"))+
+  facet_grid(basin~dgroup)
+
