@@ -141,4 +141,67 @@ nd6.site<-nd6%>%
 nodrought.compt<-cturn.jadist(ds.env=nd6.site[,1:2],ds.com = nd6.site[,-1:-2],site.id = "site")
 
 
-# 
+# extinctions----
+lp("codyn")
+
+d6.long<-d6%>%
+  filter(site %in% c("BB1","LUMO6","TB1"))%>%
+  pivot_longer(38:157,names_to = "taxa",values_to="abund")%>%
+  group_by(site,sampling,taxa)%>%
+  mutate(abund=sum(abund))%>%
+  select(site,sampling,taxa,abund)%>%
+  distinct()%>%
+  mutate(samp.var=as.numeric(sampling))
+  
+
+
+d6dis<-turnover(
+  df=d6.long,
+  time.var="samp.var",
+  species.var="taxa",
+  abundance.var="abund",
+  replicate.var="site",
+  metric="disappearance")
+
+
+nd6.long<-nd6%>%
+  filter(site %in% c("BB1","LUMO6","TB1"))%>%
+  mutate(keep=case_when(
+    site %in% c("BB1","TB1")~1,
+    site=="LUMO6" & sampling %in% c("Fall 2022","Summer 2024")~1,
+    TRUE~0))%>%
+  filter(keep==1)%>%
+  pivot_longer(38:157,names_to = "taxa",values_to="abund")%>%
+  group_by(site,sampling,taxa)%>%
+  mutate(abund=sum(abund))%>%
+  select(site,sampling,taxa,abund)%>%
+  distinct()%>%
+  mutate(samp.var=as.numeric(sampling))
+
+
+
+nd6dis<-turnover(
+  df=nd6.long,
+  time.var="samp.var",
+  species.var="taxa",
+  abundance.var="abund",
+  replicate.var="site",
+  metric="disappearance")
+
+
+#invasions ----
+d6inv<-turnover(
+  df=d6.long,
+  time.var="samp.var",
+  species.var="taxa",
+  abundance.var="abund",
+  replicate.var="site",
+  metric="appearance")
+
+nd6inv<-turnover(
+  df=nd6.long,
+  time.var="samp.var",
+  species.var="taxa",
+  abundance.var="abund",
+  replicate.var="site",
+  metric="appearance")
