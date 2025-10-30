@@ -44,7 +44,7 @@ unique(d6$sampling)
 
 d6$sampling<-factor(d6$sampling,levels=c("Spring 2022",
                                          "Summer 2022",
-                                         "Summer 2023"
+                                         "Summer 2023",
                                          "Fall 2023",
                                          "Winter 2024"))
 nd6<-nd6%>%
@@ -109,3 +109,36 @@ nodrought.space.between.cv<-cvhome(ds=nd6,
                                   g.vars = c("basin","site","sampling"),
                                   s.vars = c("basin","sampling"),
                                   dset="m")
+
+# compositional turnover
+d6.site<-d6%>%
+  group_by(site,sampling)%>%
+  mutate(nt=n())%>%
+  ungroup()%>%
+  pivot_longer(38:157,names_to = "taxa",values_to="abund")%>%
+  group_by(site,sampling,taxa)%>%
+  mutate(abund=sum(abund)/nt)%>%
+  select(site,sampling,taxa,abund)%>%
+  distinct()%>%
+  pivot_wider(names_from=taxa,values_from=abund)%>%
+  filter(site %in% c("BB1","LUMO6","TB1"))
+
+drought.compt<-cturn.jadist(ds.env=d6.site[,1:2],ds.com = d6.site[,-1:-2],site.id = "site")
+
+
+nd6.site<-nd6%>%
+  group_by(site,sampling)%>%
+  mutate(nt=n())%>%
+  ungroup()%>%
+  pivot_longer(38:157,names_to = "taxa",values_to="abund")%>%
+  group_by(site,sampling,taxa)%>%
+  mutate(abund=sum(abund)/nt)%>%
+  select(site,sampling,taxa,abund)%>%
+  distinct()%>%
+  pivot_wider(names_from=taxa,values_from=abund)%>%
+  filter(site %in% c("BB1","LUMO6","TB1"))
+
+nodrought.compt<-cturn.jadist(ds.env=nd6.site[,1:2],ds.com = nd6.site[,-1:-2],site.id = "site")
+
+
+# 
